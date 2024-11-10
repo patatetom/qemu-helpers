@@ -28,3 +28,21 @@ qemu-img () {
     }
     /usr/bin/qemu-img "$verb" -b "$base" -F "$baseFormat" -f "$format" $@
 }
+
+# qemu USB helper (bash function)
+qemu-usbhost() {
+    for usb in $( find /sys/bus/usb/devices/ | grep -E '/[0-9]+-[0-9]+$' )
+    do
+        cat $usb/product 2>/dev/null || echo "unknown device"
+        busport=$( basename $usb )
+        echo $(
+            sed -e 's/-/,hostport=/' \
+                -e 's/^/device_add usb-host,hostbus=/' \
+                -e 's/$/,id=usb-host-'$busport/ <<< $busport
+        )
+        read vendor < $usb/idVendor
+        read product < $usb/idProduct
+        echo device_add usb-host,vendorid=0x$vendor,productid=0x$product,id=usb-host-$vendor-$product
+        echo
+    done | tr '[:upper:]' '[:lower:]'
+}
