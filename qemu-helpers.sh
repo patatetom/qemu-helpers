@@ -1,3 +1,6 @@
+# qemu alias
+alias qemu='qemu-system-x86_64 -accel kvm -machine q35 -m 3072 -device VGA,edid=on,xres=1280,yres=720 -device qemu-xhci -device usb-tablet -serial mon:stdio'
+
 # qemu-img create helper (bash function)
 # no need to specify backing file format (auto-detected)
 # and/or desired file format (qcow2 by default)
