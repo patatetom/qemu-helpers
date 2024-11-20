@@ -25,7 +25,7 @@ qemu-img () {
             [[ ! -e "$base" ]] && echo 'Base image: no such file or directory' >/dev/stderr && return 1
             [[ ! -r "$base" ]] && echo 'Base image: no read permission' >/dev/stderr && return 1
             [[ -w "$base" ]] && echo 'Base image: base image is writable' >/dev/stderr && return 1
-            [[ "$baseFormat" ]] || baseFormat=$( [[ "$( head -c4 "$base" )" == "QFI\xFB" ]] && echo qcow2 || echo raw )
+            [[ "$baseFormat" ]] || baseFormat=$( [[ "$( head -c4 "$base" | base64 )" == "UUZJ+w==" ]] && echo qcow2 || echo raw )
             [[ "$format" ]] || format='qcow2'
         }
     }
