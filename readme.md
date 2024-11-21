@@ -18,9 +18,9 @@ quick call to `qemu-system-x86_64` with a few default parameters that can natura
 ## qemu
 
 this helper executes `qemu-system-x86_64` with the parameters stored in the `.4qemu` configuration file (if present and executable) and the parameters passed on the command line (which supplement or overwrite those previously defined in the configuration file or in the function).
+symbolic link can be used for `.4qemu` configuration file (eg. multiple settings).
+`chmod +x .4qemu` to activate the configuration and `chmod -x .4qemu` to deactivate it (but retain it).
 
-> _symbolic link can be used for `.4qemu` configuration file (eg. multiple settings)._
-> _`chmod +x .4qemu` to activate the configuration and `chmod -x .4qemu` to deactivate it (but retain it)._
 > _`qemu` function and `qemu` alias cannot coexist._
 
 
@@ -29,8 +29,7 @@ this helper executes `qemu-system-x86_64` with the parameters stored in the `.4q
 
 this helper follows a [discussion](https://mail.gnu.org./archive/html/qemu-discuss/2024-04/msg00017.html) on the qemu-discuss forum.
 it allows you to create a new image (qcow2 if not specified) based on a previous one, whose format will be automatically detected.
-
-> _this helper stops if the base image is not read-only._
+this helper stops if the base image is not read-only.
 
 `qemu-img create -b previous next` will run `/usr/bin/qemu-img create -b previous -F qcow2 -f qcow2 next` if `previous` base is a qcow2 file (magic string `QFI\xfb`) and `/usr/bin/qemu-img create -b previous -F raw -f qcow2 next` otherwise.
 
