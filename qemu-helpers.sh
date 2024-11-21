@@ -1,3 +1,5 @@
+#!/usr/bin/false
+
 # qemu alias
 #alias qemu='qemu-system-x86_64 -accel kvm -machine q35 -m 3072 -device VGA,edid=on,xres=1280,yres=720 -device qemu-xhci -device usb-tablet -serial mon:stdio'
 
