@@ -7,8 +7,7 @@
 -accel kvm
 -machine q35
 -m 2048
-# hv_relaxed, hv_spinlocks=0x1fff, hv_vapic et hv_time
-# are specific to a Windows guest
+# hv_relaxed, hv_spinlocks=0x1fff, hv_vapic and hv_time are specific to a Windows guest
 # sse4.2 and popcnt are required for Windows 11
 -cpu qemu64,sse4.2,popcnt,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,kvm=off
 # 2 cores are required for Windows 11
