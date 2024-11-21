@@ -1,0 +1,33 @@
+#!/usr/bin/false
+# shebang false prevents accidental execution of the configuration file
+
+# example of qemu configuration file for Windows 11
+
+# modprobe kvm-intel nested=1
+-accel kvm
+-machine q35
+-m 2048
+# hv_relaxed, hv_spinlocks=0x1fff, hv_vapic et hv_time
+# are specific to a Windows guest
+# sse4.2 and popcnt are required for Windows 11
+-cpu qemu64,sse4.2,popcnt,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,kvm=off
+# 2 cores are required for Windows 11
+-smp 2
+
+-device qemu-xhci
+# mouse/touchpad integration
+-device usb-tablet
+# bidirectional file-sharing system
+-device usb-mtp,rootdir=/tmp/,readonly=off,id=mtp
+
+-parallel null
+# avoids accidental Ctrl-C from terminal linked to qemu
+# Ctrl-A c to access qemu console from terminal-serial mon:stdio
+
+# (cp || ln -s) /usr/share/edk2/x64/OVMF[.4m].fd uefi
+-bios uefi
+
+-hda 11.disk
+
+# no network card
+-net none
