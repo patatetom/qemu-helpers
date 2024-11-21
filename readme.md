@@ -17,8 +17,10 @@ quick call to `qemu-system-x86_64` with a few default parameters that can natura
 
 ## qemu
 
-this helper executes `qemu-system-x86_64` with the parameters stored in the local `.4qemu` configuration file (if present and executable) and the parameters passed on the command line (which supplement or overwrite those previously defined in the configuration file or in the function).
+this helper executes `qemu-system-x86_64` with the parameters stored in the `.4qemu` configuration file (if present and executable) and the parameters passed on the command line (which supplement or overwrite those previously defined in the configuration file or in the function).
 
+> _symbolic link can be used for `.4qemu` configuration file (eg. multiple settings)._
+> _`chmod +x .4qemu` to activate the configuration and `chmod -x .4qemu` to deactivate it (but retain it)._
 > _`qemu` function and `qemu` alias cannot coexist._
 
 
