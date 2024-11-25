@@ -33,31 +33,58 @@ qemu() {
 # no need to specify backing file format (auto-detected)
 # and/or desired file format (qcow2 by default)
 qemu-img () {
-    local verb=$1
-    shift
-    local base baseFormat format
-    [[ "$verb" == "create" ]] &&
-    {
-        local opt OPTARG OPTIND
-        while getopts 'b:F:f:' opt
-        do
-            case $opt in
-                b) base=$OPTARG;;
-                F) baseFormat=$OPTARG;;
-                f) format=$OPTARG;;
-            esac
-        done
-        shift $((OPTIND-1))
-        [[ "$base" ]] &&
-        {
-            [[ ! -e "$base" ]] && echo 'Base image: no such file or directory' >/dev/stderr && return 1
-            [[ ! -r "$base" ]] && echo 'Base image: no read permission' >/dev/stderr && return 1
-            [[ -w "$base" ]] && echo 'Base image: base image is writable' >/dev/stderr && return 1
-            [[ "$baseFormat" ]] || baseFormat=$( [[ "$( head -c4 "$base" | base64 )" == "UUZJ+w==" ]] && echo qcow2 || echo raw )
-            [[ "$format" ]] || format='qcow2'
-        }
-    }
-    /usr/bin/qemu-img "$verb" -b "$base" -F "$baseFormat" -f "$format" $@
+	# binary to use (change path if necessary)
+	local bin=/usr/bin/qemu-img
+	# supplied verb
+	local verb=$1
+	shift
+	local base baseFormat format
+	if [[ "$verb" == "create" ]]
+	then
+		# verb is "create"
+		local opt OPTARG OPTIND
+		# read options passed on command line
+		while getopts 'b:F:f:' opt
+		do
+			case $opt in
+				b) base=$OPTARG;;
+				F) baseFormat=$OPTARG;;
+				f) format=$OPTARG;;
+			esac
+		done
+		shift $((OPTIND-1))
+		# set default (qcow2) format if not supplied
+		[[ "$format" ]] ||
+			format='qcow2'
+		if [[ "$base" ]]
+		then
+			# base image supplied : run a few tests
+			[[ ! -e "$base" ]] &&
+				echo 'Base image: no such file or directory' >/dev/stderr &&
+					return 1
+			[[ ! -r "$base" ]] &&
+				echo 'Base image: no read permission' >/dev/stderr &&
+					return 1
+			[[ -w "$base" ]] &&
+				echo 'Base image: base image is writable' >/dev/stderr &&
+					return 1
+			# set base format if not supplied (based on header)
+			[[ "$baseFormat" ]] ||
+				baseFormat=$(
+					[[ "$( head -c4 "$base" | base64 )" == "UUZJ+w==" ]] &&
+						echo qcow2 ||
+							echo raw
+				)
+			# base image : call binary for full creation
+			"$bin" "$verb" -b "$base" -F "$baseFormat" -f "$format" $@
+		else
+			# no base image supplied : call binary for simple creation
+			"$bin" "$verb" -f "$format" $@
+		fi
+	else
+		# verbe is not "create" : call binary with supplied arguments
+		"$bin" "$verb" $@
+	fi
 }
 
 # qemu USB helper (bash function)
