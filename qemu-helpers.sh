@@ -9,14 +9,13 @@
 # additional parameters (override) are forwarded in both cases
 # (use #!/usr/bin/false as shebang in configuration file to avoid execution)
 qemu() {
-    TMPDIR=/tmp/
-    config=.4qemu
-    qemu=qemu-system-x86_64
+    local config=.4qemu
+    local qemu=qemu-system-x86_64
     if [ -s "$config" ] && [ -x "$config" ]
     then
-        "$qemu" $( grep -v '#.*' "$config" ) $@
+        TMPDIR=/tmp/ "$qemu" $( grep -v '#.*' "$config" ) $@
     else
-        "$qemu" \
+        TMPDIR=/tmp/ "$qemu" \
         -accel kvm \
         -machine q35 -m 2048 \
         -cpu Nehalem,kvm=off -smp 2 \
