@@ -1,7 +1,7 @@
 #!/usr/bin/false
 
 # qemu alias
-#alias qemu='qemu-system-x86_64 -accel kvm -machine q35 -m 2048 -cpu Nehalem,kvm=off -smp 2 -device VGA,edid=on,xres=1280,yres=720 -device qemu-xhci -device usb-tablet -parallel null -serial mon:stdio'
+#alias qemu='qemu-system-x86_64 -accel kvm -machine q35 -m 2048 -cpu Nehalem,kvm=off -smp 2 -device qemu-xhci -device usb-tablet -parallel null -serial mon:stdio'
 
 # qemu command line helper (function)
 # use configuration file if exists AND executable
@@ -12,7 +12,6 @@ qemu() {
     TMPDIR=/tmp/
     config=.4qemu
     qemu=qemu-system-x86_64
-    echo "qemu command line helper :"
     if [ -s "$config" ] && [ -x "$config" ]
     then
         "$qemu" $( grep -v '#.*' "$config" ) $@
