@@ -75,6 +75,7 @@ qemu-img () {
 
 # qemu USB helper (bash function)
 qemu-usbhost() {
+    local busport product vendor
     for usb in $( find /sys/bus/usb/devices/ | grep -E '/[0-9]+-[0-9]+$' )
     do
         cat $usb/product 2>/dev/null || echo "unknown device"
