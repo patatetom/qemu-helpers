@@ -9,7 +9,7 @@
 #  additional parameters (override) are forwarded in both cases
 #  (use #!/usr/bin/false as shebang in configuration file to avoid execution)
 qemu() {
-    local config=.4qemu
+    local config=qemu.cfg
     local qemu=qemu-system-x86_64
     if [ -s "$config" ] && [ -x "$config" ]
     then
