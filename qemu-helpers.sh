@@ -70,15 +70,6 @@ qemu-img () {
 		fi
 	elif [ "$verb" == "tree" ]
 	then
-		# ! type -a jq &>/dev/null &&
-		# 	echo "jq (command-line JSON processor) is missing" >/dev/stderr &&
-		# 		return 1
-		# ! type -a numfmt &>/dev/null &&
-		# 	echo "numfmt (format numbers) is missing" >/dev/stderr &&
-		# 		return 1
-		# [ ! "$1" ] &&
-		# 	echo "expecting one image file name" >/dev/stderr &&
-		# 		return 1
 		local info=$( qemu-img info --force-share --output=json "$1" )
 		if [ "$info" ]
 		then
