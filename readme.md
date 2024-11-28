@@ -2,7 +2,7 @@
 
 _I like [QEMU](https://www.qemu.org/) and I like to use it directly from the [CLI](https://qemu.readthedocs.io/) to run tests with virtual machines : these helpers save me typing time._
 
-download `.qemu.helpers.rc` and source it after checking in your current bash shell or in your `~/.bashrc`.
+download `.qemu-helpers.rc` and source it after checking in your current bash shell or in your `~/.bashrc`.
 
 
 
