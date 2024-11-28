@@ -33,7 +33,7 @@ qemu-img () {
 	local verb=$1
 	shift
 	local base baseFormat format
-	if [[ "$verb" == "create" ]]
+	if [ "$verb" == "create" ]
 	then
 		local opt OPTARG OPTIND
 		while getopts 'b:F:f:' opt
@@ -45,22 +45,22 @@ qemu-img () {
 			esac
 		done
 		shift $((OPTIND-1))
-		[[ "$format" ]] ||
+		[ "$format" ] ||
 			format='qcow2'
-		if [[ "$base" ]]
+		if [ "$base" ]
 		then
-			[[ ! -e "$base" ]] &&
+			[ ! -e "$base" ] &&
 				echo 'Base image: no such file or directory' >/dev/stderr &&
 					return 1
-			[[ ! -r "$base" ]] &&
+			[ ! -r "$base" ] &&
 				echo 'Base image: no read permission' >/dev/stderr &&
 					return 1
-			[[ -w "$base" ]] &&
+			[ -w "$base" ] &&
 				echo 'Base image: base image is writable' >/dev/stderr &&
 					return 1
-			[[ "$baseFormat" ]] ||
+			[ "$baseFormat" ] ||
 				baseFormat=$(
-					[[ "$( head -c4 "$base" | base64 )" == "UUZJ+w==" ]] &&
+					[ "$( head -c4 "$base" | base64 )" == "UUZJ+w==" ] &&
 						echo qcow2 ||
 							echo raw
 				)
@@ -68,8 +68,33 @@ qemu-img () {
 		else
 			"$bin" "$verb" -f "$format" $@
 		fi
+	elif [ "$verb" == "tree" ]
+	then
+		# ! type -a jq &>/dev/null &&
+		# 	echo "jq (command-line JSON processor) is missing" >/dev/stderr &&
+		# 		return 1
+		# ! type -a numfmt &>/dev/null &&
+		# 	echo "numfmt (format numbers) is missing" >/dev/stderr &&
+		# 		return 1
+		# [ ! "$1" ] &&
+		# 	echo "expecting one image file name" >/dev/stderr &&
+		# 		return 1
+		local info=$( qemu-img info --force-share --output=json "$1" )
+		if [ "$info" ]
+		then
+			local virtualSize diskSize fileFormat backingFile
+			IFS=$'\n' read -srd '' virtualSize diskSize fileFormat backingFile < <(
+				jq -r '."virtual-size",."actual-size",."format",."full-backing-filename"' <<< $info
+			)
+			IFS=$'\n' read -srd '' virtualSize diskSize < <(
+				numfmt --to=iec $virtualSize $diskSize
+			)
+			[ "$2" ] && [ -w "$1" ] && tput setaf 3
+			echo "$2$1 (${fileFormat^^} - $diskSize / $virtualSize)" && tput sgr0
+			[ "$backingFile" != "null" ] && qemu-img tree "$( readlink -e "$backingFile" )" " ${2:-└─ }"
+		fi
 	else
-		"$bin" "$verb" $@
+		[ ! "$verb" ] && "$bin" --help || "$bin" "$verb" $@
 	fi
 }
 
