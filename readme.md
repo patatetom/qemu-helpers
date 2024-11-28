@@ -14,9 +14,10 @@ quick call to `qemu-system-x86_64` with a few default parameters that can natura
 `-serial mon:stdio` avoids an unfortunate Ctrl-C.
 
 > _`qemu` function and `qemu` alias cannot coexist._
+> _this latter is commented/deactivated in favor of the function._
 
 
-## function
+### function
 
 this helper executes `qemu-system-x86_64` with the parameters stored in the `.4qemu` configuration file (if present and executable) and the parameters passed on the command line (which supplement or overwrite those previously defined in the configuration file or in the function).
 symbolic link can be used for `.4qemu` configuration file (eg. multiple settings).
@@ -30,16 +31,15 @@ symbolic link can be used for `.4qemu` configuration file (eg. multiple settings
 
 ### qemu-img create
 
-this helper follows a [discussion](https://mail.gnu.org./archive/html/qemu-discuss/2024-04/msg00017.html) on the qemu-discuss forum.
-it allows you to create a new image (qcow2 if not specified) based on a previous one, whose format will be automatically detected.
-this helper stops if the base image supplied is not read-only.
+this helper allows you to create a new image (qcow2 if not specified) based on a previous one, whose format will be automatically detected.
+it stops if the base image supplied is not read-only.
 
-`qemu-img create -b previous next` will run `/usr/bin/qemu-img create -b previous -F qcow2 -f qcow2 next` if `previous` base is a qcow2 file (magic string `QFI\xfb`) and `/usr/bin/qemu-img create -b previous -F raw -f qcow2 next` otherwise.
+> _`qemu-img create -b previous next` will run `/usr/bin/qemu-img create -b previous -F qcow2 -f qcow2 next` if `previous` base is a qcow2 file (magic string `QFI\xfb`) and `/usr/bin/qemu-img create -b previous -F raw -f qcow2 next` otherwise._
 
 
 ### qemu-img tree
 
-this helper displays base images (eg. dependencies) in tree form and highlights non-read-only dependencies.
+this helper displays base images (eg. dependencies) in tree form, highlighting those that are not read-only.
 
 
 
