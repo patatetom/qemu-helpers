@@ -107,3 +107,5 @@ qemu-usbhost() {
         echo
     done | tr '[:upper:]' '[:lower:]'
 }
+
+# vim: set ft=sh :
