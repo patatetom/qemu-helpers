@@ -4,10 +4,10 @@
 #alias qemu='qemu-system-x86_64 -accel kvm -machine q35 -m 2048 -cpu Nehalem,kvm=off -smp 2 -device qemu-xhci -device usb-tablet -parallel null -serial mon:stdio'
 
 # qemu command line helper (function)
-# use configuration file if exists AND executable
-# otherwise call qemu with defined/prefered parameters
-# additional parameters (override) are forwarded in both cases
-# (use #!/usr/bin/false as shebang in configuration file to avoid execution)
+#  use configuration file if exists AND executable
+#  otherwise call qemu with defined/prefered parameters
+#  additional parameters (override) are forwarded in both cases
+#  (use #!/usr/bin/false as shebang in configuration file to avoid execution)
 qemu() {
     local config=.4qemu
     local qemu=qemu-system-x86_64
@@ -26,8 +26,10 @@ qemu() {
 }
 
 # qemu-img create helper (bash function)
-# no need to specify backing file format (auto-detected)
-# and/or desired file format (qcow2 by default)
+#  no need to specify backing file format (auto-detected)
+#  and/or desired file format (qcow2 by default)
+# qemu-img tree helper (bash function)
+#  display dependencies (base images) in tree form
 qemu-img () {
 	local bin=/usr/bin/qemu-img
 	local verb=$1
