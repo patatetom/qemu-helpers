@@ -81,7 +81,10 @@ qemu-img () {
 				numfmt --to=iec $virtualSize $diskSize
 			)
 			[ "$2" ] && [ -w "$1" ] && tput setaf 3
-			echo "$2$1 (${fileFormat^^} - $diskSize / $virtualSize)" && tput sgr0
+			[ "${fileFormat,,}" == "raw" ] &&
+			echo "$2$1 (${fileFormat^^} - $virtualSize)" ||
+			echo "$2$1 (${fileFormat^^} - $diskSize / $virtualSize)"
+			tput sgr0
 			[ "$backingFile" != "null" ] && qemu-img tree "$( readlink -ve "$backingFile" || echo "$backingFile" )" " ${2:-└─ }"
 		else
 			return 1
