@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # qemu alias
 #alias qemu='qemu-system-x86_64 -accel kvm -machine q35 -m 2048 -cpu Nehalem,kvm=off -smp 2 -device qemu-xhci -device usb-tablet -parallel null -serial mon:stdio'
 
@@ -7,20 +9,33 @@
 #  additional parameters (override) are forwarded in both cases
 #  (use #!/usr/bin/false as shebang in configuration file to avoid execution)
 qemu() {
-    local config=qemu.cfg
-    local qemu=qemu-system-x86_64
-    if [ -s "$config" ] && [ -x "$config" ]
-    then
-        TMPDIR=/tmp/ "$qemu" $( grep -v '#.*' "$config" ) $@
-    else
-        TMPDIR=/tmp/ "$qemu" \
-        -accel kvm \
-        -machine q35 -m 2048 \
-        -cpu Nehalem,kvm=off -smp 2 \
-        -device qemu-xhci -device usb-tablet \
-        -parallel null -serial mon:stdio \
-        $@
-    fi
+	local config=qemu.cfg config_args
+	local qemu=qemu-system-x86_64
+
+	# In bash/ksh/zsh you should always use [[ and never [
+	# and within [[ certain variables are always expanded as if quoted
+	if [[ -s $config ]] && [[ -x $config ]]; then
+		# Quote EVERY EXPANSION, **especially** when it's $@!
+		# I suspect you are relying on grep returning multiple words
+		# and that is why your subshell was left unquoted here. I have
+		# replaced this unsafe construct with a safe equivalent.
+		mapfile -t config_args < <(grep -v '#.*' "$config" | grep -vE '^[[:space:]]*$' | tr ' ' '\n')
+		TMPDIR=/tmp/ "$qemu" "${config_args[@]}" "$@"
+
+		# unrelatedly, did you intend grep to exclude lines with trailing
+		# line comments? Perhaps you intended to say something like:
+		#	grep -Ev '^[[:space:]]*#'
+		# to drop only commented-out lines?
+	else
+		# again, quote your expansions! *Especially* $@
+		TMPDIR=/tmp/ "$qemu" \
+		-accel kvm \
+		-machine q35 -m 2048 \
+		-cpu Nehalem,kvm=off -smp 2 \
+		-device qemu-xhci -device usb-tablet \
+		-parallel null -serial mon:stdio \
+		"$@"
+	fi
 }
 
 # qemu-img create helper (bash function)
@@ -33,8 +48,9 @@ qemu-img () {
 	local verb=$1
 	shift
 	local base baseFormat format
-	if [ "$verb" == "create" ]
-	then
+
+	# again preferring [[ to [ and quoting only when necessary
+	if [[ $verb == create ]]; then
 		local opt OPTARG OPTIND
 		while getopts 'b:F:f:' opt
 		do
@@ -44,76 +60,110 @@ qemu-img () {
 				f) format=$OPTARG;;
 			esac
 		done
-		shift $((OPTIND-1))
-		[ "$format" ] ||
+		# quote every expansion
+		shift "$((OPTIND-1))"
+
+		# again prefer [[ to [, but also stop relying on [ $var ] to
+		# check for an empty string. That's what -n is for. The fact
+		# that [[ "$var" ]] works is due to a (reliable) quirk, not
+		# because it's an intended feature.
+		[[ -n $format ]] ||
 			format='qcow2'
-		if [ "$base" ]
-		then
-			[ ! -e "$base" ] &&
+		if [[ -n $base ]]; then
+			# why redirect to /dev/stderr instead of 2?
+			[[ ! -e $base ]] &&
 				echo 'Base image: no such file or directory' >/dev/stderr &&
 					return 1
-			[ ! -r "$base" ] &&
+			[[ ! -r $base ]] &&
 				echo 'Base image: no read permission' >/dev/stderr &&
 					return 1
-			[ -w "$base" ] &&
+			[[ -w $base ]] &&
 				echo 'Base image: base image is writable' >/dev/stderr &&
 					return 1
-			[ "$baseFormat" ] ||
+			[[ -n $baseFormat ]] ||
 				baseFormat=$(
-					[ "$( head -c4 "$base" | base64 )" == "UUZJ+w==" ] &&
+					[[ "$( head -c4 "$base" | base64 )" == "UUZJ+w==" ]] &&
 						echo qcow2 ||
 							echo raw
 				)
-			"$bin" "$verb" -b "$base" -F "$baseFormat" -f "$format" $@
+			# quote every expansion! Especially $@
+			"$bin" "$verb" -b "$base" -F "$baseFormat" -f "$format" "$@"
 		else
-			"$bin" "$verb" -f "$format" $@
+			# quote every expansion! Especially $@
+			"$bin" "$verb" -f "$format" "$@"
 		fi
-	elif [ "$verb" == "tree" ]
-	then
+	elif [[ $verb == tree ]]; then
 		local info=$( qemu-img info --force-share --output=json "$1" )
-		if [ "$info" ]
-		then
+		if [[ -n $info ]]; then
 			local virtualSize diskSize fileFormat backingFile
 			IFS=$'\n' read -srd '' virtualSize diskSize fileFormat backingFile < <(
-				jq -r '."virtual-size",."actual-size",."format",."full-backing-filename"' <<< $info
+				# quote EVERY expansion!
+				jq -r '."virtual-size",."actual-size",."format",."full-backing-filename"' <<< "$info"
 			)
 			IFS=$'\n' read -srd '' virtualSize diskSize < <(
-				numfmt --to=iec $virtualSize $diskSize
+				# quote EVERY expansion!!
+				numfmt --to=iec "$virtualSize" "$diskSize"
 			)
-			[ "$2" ] && [ -w "$1" ] && tput setaf 3
-			[ "${fileFormat,,}" == "raw" ] &&
-			echo "$2$1 (${fileFormat^^} - $virtualSize)" ||
-			echo "$2$1 (${fileFormat^^} - $diskSize / $virtualSize)"
+			[[ -n $2 ]] && [[ -w $1 ]] && tput setaf 3
+			# use printf to make output format easier to understand
+			# and just because printf is better than echo
+			[[ ${fileFormat,,} == raw ]] &&
+			printf '%s%s (%s - %s\n' \
+				"$2" "$1" "${fileFormat^^}" "$virtualSize" ||
+			printf '%s%s (%s - %s / %s)\n' \
+				"$2" "$1" "${fileFormat^^}" "$diskSize" "$virtualSize"
 			tput sgr0
-			[ "$backingFile" != "null" ] && qemu-img tree "$( readlink -ve "$backingFile" || echo "$backingFile" )" " ${2:-└─ }"
-		else
-			return 1
+			[[ $backingFile != null ]] && qemu-img tree "$( readlink -e "$backingFile" )" " ${2:-└─ }"
 		fi
 	else
-		[ ! "$verb" ] && "$bin" --help || "$bin" "$verb" $@
+		# [ ! "$var" ] instead of [[ -z $var ]] is even worse than not using -n
+		# again quoting $@ because yikes
+		[[ -z $verb ]] && "$bin" --help || "$bin" "$verb" "$@"
 	fi
 }
 
 # qemu USB helper (bash function)
 qemu-usbhost() {
-    local busport product vendor
-    for usb in $(
-        find /sys/bus/usb/devices/ |
-        grep -E '^/sys/bus/usb/devices/[0-9]+-[0-9]+$'
-    )
-    do
-        cat $usb/product 2>/dev/null || echo "unknown device"
-        busport=$( basename $usb )
-        echo \ $(
-            sed -e 's/-/,hostport=/' \
-                -e 's/^/device_add usb-host,hostbus=/' \
-                -e 's/$/,id=usb-host-'$busport/ <<< $busport
-        )
-        read vendor < $usb/idVendor
-        read product < $usb/idProduct
-        echo \ device_add usb-host,vendorid=0x$vendor,productid=0x$product,id=usb-host-$vendor-$product
-        echo
-    done | tr '[:upper:]' '[:lower:]'
+	# also declaring a local usb variable so it doesn't leak into the outer
+	# scope
+	local usb busport product vendor
+
+	# do not use for var in $(unquoted subshell); it's always broken!
+	while IFS= read -r -d '' usb; do
+		# quote every expansion! No exceptions, even if you think it's saf.e
+		cat "$usb"/product 2>/dev/null || echo 'unknown device'
+
+		# you can avoid basename using parameter expansion
+		busport=${usb##*/}
+
+		# Use of printf should be preferred to echo generally
+		# and in this situation makes formatting choices more clear.
+		# Quoting the subsell expansion because, again, *always* quote.
+		printf ' %s\n' "$(
+			sed -e 's/-/,hostport=/' \
+				-e 's/^/device_add usb-host,hostbus=/' \
+				-e 's/$/,id=usb-host-'"$busport"/ <<< "$busport"
+		)"
+
+		# read without -r is broken, always use -r
+		# read without setting IFS trims whitespace. Always set IFS to
+		# make it clear whether you intended trimming to occur. Again,
+		# always quote expansions.
+		IFS= read  -r vendor < "$usb"/idVendor
+		IFS= read  -r product < "$usb"/idProduct
+
+		# again, formatting choice is more clear with printf, and printf
+		# is better than echo anyway.
+		printf' device_add usb-host,vendorid=0x%s,productid=0x%s,id=usb-host-%s-%s\n\n' \
+			"$vendor" "$product" "$vendor" "$product"
+	done < <(
+		# no need to pipe to grep, GNU find can match regex directly
+		# using NUL delimited output for maximum safety
+		find /sys/bus/usb/devices/ \
+			-regextype posix-egrep \
+			-regex '^/sys/bus/usb/devices/[0-9]+-[0-9]+$' \
+			-print0
+	) | tr '[:upper:]' '[:lower:]'
 }
 
 # vim: set ft=sh :
