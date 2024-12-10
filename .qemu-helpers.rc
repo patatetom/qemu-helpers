@@ -70,20 +70,20 @@ qemu-img () {
 			format='qcow2'
 		if [[ -n "$base" ]]
 		then
-			[[ ! -e "$base" ]] &&
-				echo 'Base image: no such file or directory' >&2 &&
-					return 1
-			[[ ! -r "$base" ]] &&
-				echo 'Base image: no read permission' >&2 &&
-					return 1
-			[[ -w "$base" ]] &&
-				echo 'Base image: base image is writable' >&2 &&
-					return 1
-			[[ -n "$baseFormat" ]] ||
-				baseFormat=$(
-					[[ "$( head -c4 "$base" | base64 )" == "UUZJ+w==" ]] &&
-						echo qcow2 ||
-							echo raw
+			[[ ! -e "$base" ]] \
+				&& echo 'Base image: no such file or directory' >&2 \
+				&& return 1
+			[[ ! -r "$base" ]] \
+				&& echo 'Base image: no read permission' >&2 \
+				&& return 1
+			[[ -w "$base" ]] \
+				&& echo 'Base image: base image is writable' >&2 \
+				&& return 1
+			[[ -n "$baseFormat" ]] \
+				|| baseFormat=$(
+					[[ "$( head -c4 "$base" | base64 )" == "UUZJ+w==" ]] \
+						&& echo qcow2 \
+						|| echo raw
 				)
 			"$bin" "$verb" -b "$base" -F "$baseFormat" -f "$format" "$@"
 		else
@@ -91,27 +91,31 @@ qemu-img () {
 		fi
 	elif [[ "$verb" == "tree" ]]
 	then
-		local info=$( qemu-img info --force-share --output=json "$1" )
+		local info
+		info=$( qemu-img info --force-share --output=json "$1" )
 		if [[ -n "$info" ]]
 		then
 			local virtualSize diskSize fileFormat backingFile
-			IFS=$'\n' read -srd '' virtualSize diskSize fileFormat backingFile < <(
+			IFS=$'\n' read -s -r -d '' virtualSize diskSize fileFormat backingFile < <(
 				jq -r '."virtual-size",."actual-size",."format",."full-backing-filename"' <<< "$info"
 			)
 			IFS=$'\n' read -srd '' virtualSize diskSize < <(
 				numfmt --to=iec "$virtualSize" "$diskSize"
 			)
 			[[ -n "$2" ]] && [[ -w "$1" ]] && tput setaf 3
-			[[ "${fileFormat,,}" == "raw" ]] &&
-			echo "$2$1 (${fileFormat^^} - $virtualSize)" ||
-			echo "$2$1 (${fileFormat^^} - $diskSize / $virtualSize)"
+			[[ "${fileFormat,,}" == "raw" ]] \
+				&& echo "$2$1 (${fileFormat^^} - $virtualSize)" \
+				|| echo "$2$1 (${fileFormat^^} - $diskSize / $virtualSize)"
 			tput sgr0
-			[[ "$backingFile" != "null" ]] && qemu-img tree "$( readlink -ve "$backingFile" || echo "$backingFile" )" " ${2:-└─ }"
+			[[ "$backingFile" != "null" ]] \
+				&& qemu-img tree "$( readlink -ve "$backingFile" || echo "$backingFile" )" " ${2:-└─ }"
 		else
 			return 1
 		fi
 	else
-		[[ -z "$verb" ]] && "$bin" --help || "$bin" "$verb" "$@"
+		[[ -z "$verb" ]] \
+			&& "$bin" --help \
+			|| "$bin" "$verb" "$@"
 	fi
 }
 
@@ -139,5 +143,6 @@ qemu-usbhost() {
 		     -print0
 	) | tr '[:upper:]' '[:lower:]'
 }
+
 
 # vim: set ft=sh :
