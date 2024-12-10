@@ -57,12 +57,13 @@ qemu-img () {
 	if [[ "$verb" == "create" ]]
 	then
 		local opt OPTARG OPTIND
-		while getopts 'b:F:f:' opt
+		while getopts ':b:F:f:' opt
 		do
 			case $opt in
 				b) base=$OPTARG;;
 				F) baseFormat=$OPTARG;;
 				f) format=$OPTARG;;
+				\?) echo "-$OPTARG: option not covered by helper" >&2 && return 1;;
 			esac
 		done
 		shift "$((OPTIND-1))"
