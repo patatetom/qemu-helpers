@@ -1,9 +1,10 @@
 #!/usr/bin/false
 
+
 # qemu alias
 # (qemu alias and qemu function cannot coexist)
 #alias qemu='
-# TMPDIR=/tmp/
+# TMPDIR=/tmp/ \
 # qemu-system-x86_64 \
 # -accel kvm \
 # -machine q35 -m 2048 \
@@ -11,6 +12,7 @@
 # -device qemu-xhci -device usb-tablet \
 # -parallel null -serial mon:stdio
 #'
+
 
 # qemu command line helper (function)
 #  use configuration file if exists AND executable
@@ -33,6 +35,7 @@ qemu() {
         $@
     fi
 }
+
 
 # qemu-img create helper (bash function)
 #  no need to specify backing file format (auto-detected)
@@ -104,6 +107,7 @@ qemu-img () {
 		[ ! "$verb" ] && "$bin" --help || "$bin" "$verb" $@
 	fi
 }
+
 
 # qemu USB helper (bash function)
 qemu-usbhost() {
