@@ -118,24 +118,26 @@ qemu-img () {
 
 # qemu USB helper (bash function)
 qemu-usbhost() {
-    local busport product vendor
-    for usb in $(
-        find /sys/bus/usb/devices/ |
-        grep -E '^/sys/bus/usb/devices/[0-9]+-[0-9]+$'
-    )
-    do
-        cat $usb/product 2>/dev/null || echo "unknown device"
-        busport=$( basename $usb )
-        echo \ $(
-            sed -e 's/-/,hostport=/' \
-                -e 's/^/device_add usb-host,hostbus=/' \
-                -e 's/$/,id=usb-host-'$busport/ <<< $busport
-        )
-        read vendor < $usb/idVendor
-        read product < $usb/idProduct
-        echo \ device_add usb-host,vendorid=0x$vendor,productid=0x$product,id=usb-host-$vendor-$product
-        echo
-    done | tr '[:upper:]' '[:lower:]'
+	local usb busport product vendor
+	while IFS= read -r -d '' usb
+	do
+		cat "$usb"/product 2>/dev/null || echo 'unknown device'
+		busport=${usb##*/}
+		echo \ "$(
+			sed -e 's/-/,hostport=/' \
+			    -e 's/^/device_add usb-host,hostbus=/' \
+			    -e 's/$/,id=usb-host-'"$busport"/ <<< "$busport"
+		)"
+		IFS= read -r vendor < "$usb"/idVendor
+		IFS= read -r product < "$usb"/idProduct
+		echo \ device_add usb-host,vendorid=0x"$vendor",productid=0x"$product",id=usb-host-"$vendor"-"$product"
+		echo
+	done < <(
+		find /sys/bus/usb/devices/ \
+		     -regextype posix-egrep \
+		     -regex '^/sys/bus/usb/devices/[0-9]+-[0-9]+$' \
+		     -print0
+	) | tr '[:upper:]' '[:lower:]'
 }
 
 # vim: set ft=sh :
