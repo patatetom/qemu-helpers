@@ -15,25 +15,32 @@
 
 
 # qemu command line helper (function)
-#  use configuration file if exists AND executable
-#  otherwise call qemu with defined/prefered parameters
-#  additional parameters (override) are forwarded in both cases
-#  (use #!/usr/bin/false as shebang in configuration file to avoid execution)
+# (qemu function and qemu alias cannot coexist)
+#	use configuration file if exists AND executable
+#	otherwise call qemu with defined/prefered parameters
+#	additional parameters (override) are forwarded in both cases
+#	(use #!/usr/bin/false as shebang in configuration file to avoid execution)
 qemu() {
-    local config=qemu.cfg
-    local qemu=qemu-system-x86_64
-    if [ -s "$config" ] && [ -x "$config" ]
-    then
-        TMPDIR=/tmp/ "$qemu" $( grep -v '#.*' "$config" ) $@
-    else
-        TMPDIR=/tmp/ "$qemu" \
-        -accel kvm \
-        -machine q35 -m 2048 \
-        -cpu Nehalem,kvm=off -smp 2 \
-        -device qemu-xhci -device usb-tablet \
-        -parallel null -serial mon:stdio \
-        $@
-    fi
+	local config=qemu.cfg
+	local qemu=qemu-system-x86_64
+	if [[ -s "$config" ]] && [[ -x "$config" ]]
+	then
+		local args
+		mapfile -t args < <( sed 's/#.*//g; s/ /\n/g; /^[[:space:]]*$/d' "$config" )
+		TMPDIR=/tmp/ \
+		"$qemu" \
+		"${args[@]}" \
+		"$@"
+	else
+		TMPDIR=/tmp/ \
+		"$qemu" \
+		-accel kvm \
+		-machine q35 -m 2048 \
+		-cpu Nehalem,kvm=off -smp 2 \
+		-device qemu-xhci -device usb-tablet \
+		-parallel null -serial mon:stdio \
+		"$@"
+	fi
 }
 
 
